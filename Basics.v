@@ -951,6 +951,13 @@ Fixpoint double_bin (b : bin) : bin :=
     | Od n => Tw (Od n)
   end.
 
+Fixpoint zerop_bin (b : bin) : bool :=
+  match b with
+    | Ze => true
+    | Tw n => zerop_bin n
+    | Od n => false
+  end.
+
 Fixpoint nat_to_bin (n : nat) : bin :=
   match n with
     | O => Ze
@@ -983,13 +990,93 @@ Qed.
 
 Require Import Omega.
 
-(*
+Lemma twice_nat_to_bin :
+  forall n,
+    n = O \/ Tw (nat_to_bin n) = nat_to_bin (2 * n).
+Proof.
+  intro n.
+  
+  induction n.
+  left; reflexivity.
+  
+  destruct IHn.
+  subst; right; reflexivity.
+  assert (2 * S n = S (S (2 * n))) as H' by omega.
+  rewrite H'.
+  right; simpl.
+  
+  simpl in H.
+  rewrite <- H.
+  simpl.
+  reflexivity.
+Qed.
+
+Lemma odd_nat_to_bin :
+  forall n,
+    Od (nat_to_bin n) = nat_to_bin (1 + 2 * n).
+Proof.
+  induction n.
+  
+  reflexivity.
+  
+  assert (1 + 2 * S n = 1 + S (S (2 * n))) as H' by omega.
+  rewrite H'.
+  simpl in *.
+  rewrite <- IHn.
+  simpl.
+  reflexivity.
+Qed.
+
+Lemma zero_bin_nat :
+  forall b,
+    zerop_bin b = false -> bin_to_nat b = 0 -> False.
+Proof.
+  induction b; simpl; intros.
+  
+  congruence.
+  
+  assert (bin_to_nat b = 0) by omega.
+  auto.
+  
+  discriminate.
+Qed.
+
 Theorem bin_to_nat_right_inverse :
   forall b,
+    (zerop_bin b = true -> b = Ze) ->
     b = nat_to_bin (bin_to_nat b).
+Proof.
+  induction b.
+  
+  reflexivity.
+  
+  simpl in *; intros.
+  assert (zerop_bin b = false) as HX.
+  destruct (zerop_bin b).
+  pose (H (eq_refl _)).
+  discriminate.
+  reflexivity.
+  assert (zerop_bin b = true -> b = Ze) as H'.
+  intros.
+  congruence.
+  pose (IHb H') as IHb'.
+  destruct (twice_nat_to_bin (bin_to_nat b)).
+  elimtype False.
+  apply (zero_bin_nat _ HX H0).
+  simpl in *.
+  rewrite <- H0.
+  rewrite <- IHb'.
+  reflexivity.
+  
+  intros.
+  simpl.
+  pose (twice_nat_to_bin (bin_to_nat b)) as o.
+Admitted.
 
-Too hard to prove because Ze and Tw Ze and Tw (Tw Ze) .. have the same meaning
-*)
+(*
+So the problem isn't just Tw (Tw (Tw Ze))) but also Od (Tw (Tw (Tw Ze)))), need a notion of canonical form etc.. 
+*) 
+
 
 (*
 
