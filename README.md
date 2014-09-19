@@ -9,7 +9,7 @@ Progress:
 | ------------- |--------------:|
 | Preface | done | 
 | Basics: Functional Programming in Coq | done, one [extra] proof too hard | 
-| Induction: Proof by Induction | | 
+| Induction: Proof by Induction |  done! skipped informal proofs | 
 | Lists: Working with Structured Data | | 
 | Poly: Polymorphism and Higher-Order Functions | | 
 | MoreCoq: More About Coq | | 
