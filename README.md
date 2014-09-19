@@ -7,8 +7,8 @@ Progress:
 
 | Chapter       | Status        |
 | ------------- |--------------:|
-| Preface | | 
-| Basics: Functional Programming in Coq | | 
+| Preface | done | 
+| Basics: Functional Programming in Coq | done, one [extra] proof too hard | 
 | Induction: Proof by Induction | | 
 | Lists: Working with Structured Data | | 
 | Poly: Polymorphism and Higher-Order Functions | | 
