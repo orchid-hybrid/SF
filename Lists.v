@@ -351,7 +351,7 @@ SearchAbout nat.
 Fixpoint count (v:nat) (s:bag) : nat := 
   match s with
     | nil => O
-    | x :: xs => if PeanoNat.Nat.eq_dec v x then S (count v xs) else count v xs
+    | x :: xs => if beq_nat v x then S (count v xs) else count v xs
   end.
 
 (** All these proofs can be done just by [reflexivity]. *)
@@ -386,7 +386,7 @@ Proof. reflexivity. Qed.
 Example test_add2:                count 5 (add 1 [1;4;1]) = 0.
 Proof. reflexivity. Qed.
 
-Definition member (v:nat) (s:bag) : bool := if PeanoNat.Nat.eq_dec (count v s) 0 then false else true.
+Definition member (v:nat) (s:bag) : bool := if beq_nat (count v s) 0 then false else true.
 
 Example test_member1:             member 1 [1;4;1] = true.
 Proof. reflexivity. Qed.
@@ -404,7 +404,7 @@ Fixpoint remove_one (v:nat) (s:bag) : bag :=
   match s with
     | nil => nil
     | x :: xs =>
-      if PeanoNat.Nat.eq_dec v x
+      if beq_nat v x
       then xs
       else x :: remove_one v xs
   end.
@@ -421,7 +421,7 @@ Proof. reflexivity. Qed.
 Fixpoint remove_all (v:nat) (s:bag) : bag :=
   match s with
     | nil => nil
-    | x :: xs => if PeanoNat.Nat.eq_dec v x
+    | x :: xs => if beq_nat v x
                  then remove_all v xs
                  else x :: remove_all v xs
   end.
@@ -439,7 +439,7 @@ Proof. reflexivity. Qed.
 Fixpoint subset (s1:bag) (s2:bag) : bool :=
   match s1 with
     | nil => true
-    | x :: xs => if PeanoNat.Nat.eq_dec (count x s2) 0
+    | x :: xs => if beq_nat (count x s2) 0
                  then false
                  else subset xs (remove_one x s2)
   end.
@@ -467,13 +467,11 @@ Proof.
   induction b.
   
   simpl.
-  destruct (PeanoNat.Nat.eq_dec x x).
+  rewrite <- beq_nat_refl.
   reflexivity.
-  congruence.
   
   simpl.
-  destruct (PeanoNat.Nat.eq_dec x x).
-  reflexivity.
+  rewrite <- beq_nat_refl.
   congruence.
 Qed.
 
@@ -885,7 +883,7 @@ Qed.
 Fixpoint beq_natlist (l1 l2 : natlist) : bool :=
   match l1, l2 with
     | nil, nil => true
-    | x :: xs, y :: ys => if PeanoNat.Nat.eq_dec x y
+    | x :: xs, y :: ys => if beq_nat x y
                           then beq_natlist xs ys
                           else false
     | _, _ => false
@@ -905,8 +903,10 @@ Proof.
   
   reflexivity.
   
-  destruct (PeanoNat.Nat.eq_dec n n); congruence.
+  rewrite <- beq_nat_refl.
+  congruence.
 Qed.
+
 (** [] *)
 
 (* ###################################################### *)
@@ -975,14 +975,14 @@ Proof.
   induction b1; simpl; intros.
   reflexivity.
   destruct b2; simpl.
-  destruct (PeanoNat.Nat.eq_dec x n).
+  destruct (beq_nat x n).
   SearchAbout plus.
   rewrite plus_0_r.
   reflexivity.
   rewrite plus_0_r.
   reflexivity.
-  destruct (PeanoNat.Nat.eq_dec x n);
-    destruct (PeanoNat.Nat.eq_dec x n0).
+  destruct (beq_nat x n);
+    destruct (beq_nat x n0).
   
   rewrite IHb1.
 Require Import Arith.
