@@ -20,7 +20,7 @@ Progress:
 | ProofObjects: Working with Explicit Evidence in Coq | | 
 | MoreInd: More on Induction | | 
 | SfLib: Software Foundations Library | | 
-| Imp: Simple Imperative Programs | | 
+| Imp: Simple Imperative Programs | proved the compiler! just bonus questions left.. | 
 | ImpParser: Lexing and Parsing in Coq | | 
 | ImpCEvalFun: Evaluation Function for Imp | | 
 | Extraction: Extracting ML from Coq | | 
