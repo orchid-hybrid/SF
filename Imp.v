@@ -2239,9 +2239,43 @@ Reserved Notation "c1 '/' st '||' s '/' st'"
 Inductive ceval : com -> state -> status -> state -> Prop :=
   | E_Skip : forall st,
       CSkip / st || SContinue / st
-  (* FILL IN HERE *)
+  | E_Break : forall st,
+      CBreak / st || SBreak / st
+  | E_Ass : forall st a1 n x,
+              aeval st a1 = n ->
+              (x ::= a1) / st || SContinue / (update st x n)
+  | E_IfTrue : forall st st' b c1 c2 us,
+      beval st b = true ->
+      c1 / st || us / st' ->
+      (IFB b THEN c1 ELSE c2 FI) / st || us / st'
+  | E_IfFalse : forall st st' b c1 c2 us,
+      beval st b = false ->
+      c2 / st || us / st' ->
+      (IFB b THEN c1 ELSE c2 FI) / st || us / st'
+
+  | E_SeqBreak : forall c1 c2 st st',
+      c1 / st  || SBreak / st' ->
+      (c1 ; c2) / st || SBreak / st'
+  | E_SeqContinue : forall c1 c2 st st' st'' us,
+      c1 / st  || SContinue / st' ->
+      c2 / st' || us / st'' ->
+      (c1 ; c2) / st || us / st''
+  | E_WhileEnd : forall b st c,
+      beval st b = false ->
+      (WHILE b DO c END) / st || SContinue / st
+  | E_WhileLoopContinue : forall st st' st'' b c,
+      beval st b = true ->
+      c / st || SContinue / st' ->
+      (WHILE b DO c END) / st' || SContinue / st'' ->
+      beval st'' b = false ->
+      (WHILE b DO c END) / st || SContinue / st''
+  | E_WhileLoopBreak : forall st st' b c,
+      beval st b = true ->
+      c / st || SBreak / st' ->
+      (WHILE b DO c END) / st || SContinue / st'
 
   where "c1 '/' st '||' s '/' st'" := (ceval c1 st s st').
+
 
 Tactic Notation "ceval_cases" tactic(first) ident(c) :=
   first;
@@ -2255,20 +2289,36 @@ Theorem break_ignore : forall c st st' s,
      (BREAK; c) / st || s / st' ->
      st = st'.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H; subst.
+  
+  inversion H5; subst.
+  reflexivity.
+  
+  inversion H2.
+Qed.
 
 Theorem while_continue : forall b c st st' s,
   (WHILE b DO c END) / st || s / st' ->
   s = SContinue.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H; subst;
+  try reflexivity.
+Qed.  
 
 Theorem while_stops_on_break : forall b c st st',
   beval st b = true ->
   c / st || SBreak / st' ->
   (WHILE b DO c END) / st || SContinue / st'.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  
+  eapply E_WhileLoopBreak.
+  apply H.
+  apply H0.
+Qed.
+
 
 (** **** Exercise: 3 stars, advanced, optional (while_break_true) *)
 Theorem while_break_true : forall b c st st',
@@ -2276,16 +2326,176 @@ Theorem while_break_true : forall b c st st',
   beval st' b = true ->
   exists st'', c / st'' || SBreak / st'.
 Proof.
-(* FILL IN HERE *) Admitted.
-
+  intros.
+  
+  inversion H; subst;
+  try congruence;
+  try (exists st; assumption).
+Qed.
+  
 (** **** Exercise: 4 stars, advanced, optional (ceval_deterministic) *)
 Theorem ceval_deterministic: forall (c:com) st st1 st2 s1 s2,
      c / st || s1 / st1  ->
      c / st || s2 / st2 ->
      st1 = st2 /\ s1 = s2.
 Proof.
-  (* FILL IN HERE *) Admitted.
 
+  intros c st st1 st2 s1 s2 D;
+  revert st2 s2; induction D; intros st2 s2; intro D'.
+  
+  Focus 1.
+  inversion D'; subst.
+  tauto.
+
+  Focus 1.
+  inversion D'; subst.
+  tauto.
+
+  Focus 1.
+  inversion D'; subst.
+  tauto.
+
+  Focus 1.
+  inversion D'; subst.
+  apply IHD.
+  tauto.
+  elimtype False.
+  congruence.
+  
+  Focus 1.
+  inversion D'; subst.
+  elimtype False.
+  congruence.
+  apply IHD.
+  tauto.
+
+  Focus 1.
+  inversion D'; subst.
+  apply IHD.
+  assumption.
+  pose (IHD _ _ H1).
+  destruct a.
+  discriminate.
+  
+  Focus 1.
+  inversion D'; subst.
+  pose (IHD1 _ _ H4).
+  destruct a.
+  discriminate.
+  apply IHD2.
+  pose (IHD1 _ _ H1).
+  destruct a; subst.
+  assumption.
+
+  Focus 1.
+  inversion D'; subst.
+  Focus 1.
+  tauto.
+  congruence.
+  congruence.
+  
+  Focus 1.
+  inversion D'; subst.
+  congruence.
+  pose (IHD1 _ _ H4).
+  destruct a; subst.
+  pose (IHD2 _ _ H5).
+  destruct a; subst.
+  tauto.
+  Focus 1.
+  pose (IHD1 _ _ H7).
+  destruct a; subst.
+  discriminate.
+  
+  Focus 1.
+  inversion D'; subst.
+  congruence.
+  pose (IHD _ _ H3).
+  destruct a; discriminate.
+  pose (IHD _ _ H6).
+  destruct a; subst.
+  tauto.
+
+Qed.
+  
+(********
+
+My first failed attempt
+
+  induction c; intros.
+  
+  inversion H; subst.
+  inversion H0; subst.
+  tauto.
+  
+  inversion H; subst.
+  inversion H0; subst.
+  tauto.
+  
+  inversion H; subst.
+  inversion H0; subst.
+  tauto.
+  
+  
+  Focus 1.
+  inversion H; subst; clear H;
+   inversion H0; subst; clear H0.
+  pose (IHc1 _ _ _ _ _ H6 H5).
+  tauto.
+  pose (IHc1 _ _ _ _ _ H6 H2).
+  destruct a.
+  congruence.
+  pose (IHc1 _ _ _ _ _ H3 H6).
+  destruct a.
+  congruence.
+  pose (IHc1 _ _ _ _ _ H3 H2).
+  destruct a; subst.
+  pose (IHc2 _ _ _ _ _ H7 H8).
+  destruct a; subst.
+  tauto.
+  
+  Focus 1.
+  inversion H; subst; clear H;
+   inversion H0; subst; clear H0.
+  destruct (IHc1 _ _ _ _ _ H8 H9); subst.
+  tauto.
+  congruence.
+  congruence.
+  destruct (IHc2 _ _ _ _ _ H8 H9); subst.
+  tauto.
+  
+  Focus 1.
+  
+  inversion H; subst; clear H;
+    inversion H0; subst; clear H0;
+     try congruence;
+     try tauto.
+  destruct (IHc _ _ _ _ _ H4 H6); subst; clear H4; clear H6.
+  
+  Focus 2.
+  destruct (IHc _ _ _ _ _ H4 H10); subst.
+  congruence.
+  Focus 2.
+  destruct (IHc _ _ _ _ _ H4 H7); subst.
+  congruence.
+  Focus 2.
+  destruct (IHc _ _ _ _ _ H7 H8); subst.
+  tauto.
+  
+  inversion H7; subst; clear H7;
+   inversion H5; subst; clear H5;
+    try congruence;
+    try tauto..
+  
+  Focus 2.
+  destruct (IHc _ _ _ _ _ H6 H13); subst; congruence.
+  Focus 2.
+  destruct (IHc _ _ _ _ _ H8 H7); subst; congruence.
+  Focus 2.
+  destruct (IHc _ _ _ _ _ H8 H10); subst; tauto.
+  
+******)  
+  
 End BreakImp.
 (** [] *)
 

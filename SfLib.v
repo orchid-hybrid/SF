@@ -171,7 +171,16 @@ Theorem multi_trans :
       multi R y z ->
       multi R x z.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X R x y z H; revert z.
+  
+  induction H.
+  trivial.
+  intros z0 H'.
+  pose (IHmulti _ H').
+  eapply multi_step.
+  apply H.
+  apply m.
+Qed.
 
 (**  Identifiers and polymorphic partial maps. *)
 
@@ -200,7 +209,12 @@ Qed.
 Lemma neq_id : forall (T:Type) x y (p q:T), x <> y -> 
                (if eq_id_dec x y then p else q) = q. 
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros T x y p q N.
+  destruct (eq_id_dec x y).
+  subst.
+  elimtype False; apply N; trivial.
+  reflexivity.
+Qed.
 
 Definition partial_map (A:Type) := id -> option A.
 
