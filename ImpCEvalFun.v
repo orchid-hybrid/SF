@@ -181,15 +181,29 @@ Definition test_ceval (st:state) (c:com) :=
    [X] (inclusive: [1 + 2 + ... + X]) in the variable [Y].  Make sure
    your solution satisfies the test that follows. *)
 
-Definition pup_to_n : com := 
-  (* FILL IN HERE *) admit.
+Notation "'SKIP'" :=
+  CSkip.
+Notation "x '::=' a" :=
+  (CAss x a) (at level 60).
+Notation "c1 ;; c2" :=
+  (CSeq c1 c2) (at level 80, right associativity).
+Notation "'WHILE' b 'DO' c 'END'" :=
+  (CWhile b c) (at level 80, right associativity).
+Notation "'IFB' c1 'THEN' c2 'ELSE' c3 'FI'" :=
+  (CIf c1 c2 c3) (at level 80, right associativity).
 
-(* 
+Definition pup_to_n : com :=
+  Y ::= (ANum 0);;
+  WHILE (BNot (BEq (ANum 0) (AId X))) DO
+    Y ::= APlus (AId X) (AId Y);;
+    X ::= AMinus (AId X) (ANum 1)
+  END.
+
 Example pup_to_n_1 : 
   test_ceval (update empty_state X 5) pup_to_n
   = Some (0, 15, 0).
 Proof. reflexivity. Qed.
-*)
+
 (** [] *)
 
 (** **** Exercise: 2 stars, optional (peven) *)
@@ -197,7 +211,38 @@ Proof. reflexivity. Qed.
     sets [Z] to [1] otherwise.  Use [ceval_test] to test your
     program. *)
 
-(* FILL IN HERE *)
+Definition peven : com :=
+  Z ::= (ANum 0);;
+  WHILE (BNot (BEq (ANum 0) (AId X))) DO
+    X ::= AMinus (AId X) (ANum 1);;
+    Z ::= AMinus (ANum 1) (AId Z)
+  END.
+
+Example peven_0 : 
+  test_ceval (update empty_state X 0) peven
+  = Some (0, 0, 0).
+Proof.  reflexivity. Qed.
+
+Example peven_1 : 
+  test_ceval (update empty_state X 1) peven
+  = Some (0, 0, 1).
+Proof. reflexivity. Qed.
+
+Example peven_2 : 
+  test_ceval (update empty_state X 2) peven
+  = Some (0, 0, 0).
+Proof.  reflexivity. Qed.
+
+Example peven_3 : 
+  test_ceval (update empty_state X 3) peven
+  = Some (0, 0, 1).
+Proof.  reflexivity. Qed.
+
+Example peven_4 : 
+  test_ceval (update empty_state X 4) peven
+  = Some (0, 0, 0).
+Proof.  reflexivity. Qed.
+
 (** [] *)
 
 (* ################################################################ *)
@@ -222,8 +267,9 @@ Proof.
   induction i as [| i' ].
 
   Case "i = 0 -- contradictory".
-    intros c st st' H. inversion H.
-
+  intros c st st' H.
+  inversion H.
+  
   Case "i = S i'".
     intros c st st' H.
     com_cases (destruct c) SCase; 
@@ -232,7 +278,7 @@ Proof.
       SCase "::=". apply E_Ass. reflexivity.
 
       SCase ";;".
-        destruct (ceval_step st c1 i') eqn:Heqr1. 
+        destruct (ceval_step st c1 i') eqn:Heqr1.
         SSCase "Evaluation of r1 terminates normally".
           apply E_Seq with s. 
             apply IHi'. rewrite Heqr1. reflexivity.
@@ -328,7 +374,63 @@ Theorem ceval__ceval_step: forall c st st',
 Proof. 
   intros c st st' Hce.
   ceval_cases (induction Hce) Case.
-  (* FILL IN HERE *) Admitted.
+
+  exists 1.
+  simpl.
+  reflexivity.
+
+  exists 1.
+  simpl.
+  subst.
+  reflexivity.
+
+ destruct IHHce1 as [j IHHce1].
+ destruct IHHce2 as [k IHHce2].
+ exists (S (j + k)).
+ simpl.
+ assert (ceval_step st c1 (j + k) = Some st') as X1.
+ assert (j <= j + k) as L1 by omega.
+ apply (ceval_step_more _ _ _ _ _ L1 IHHce1).
+ assert (ceval_step st' c2 (j + k) = Some st'') as X2.
+ assert (k <= j + k) as L2 by omega.
+ apply (ceval_step_more _ _ _ _ _ L2 IHHce2).
+ rewrite X1.
+ rewrite X2.
+ reflexivity.
+
+ destruct IHHce as [j IHHce].
+ exists (S j).
+ simpl.
+ rewrite H.
+ congruence.
+ 
+ destruct IHHce as [j IHHce].
+ exists (S j).
+ simpl.
+ rewrite H.
+ congruence.
+
+ exists 1.
+ simpl.
+ rewrite H.
+ reflexivity.
+
+ destruct IHHce1 as [j IHHce1].
+ destruct IHHce2 as [k IHHce2].
+ exists (S (j + k)).
+ simpl.
+ rewrite H.
+ assert (ceval_step st c (j + k) = Some st') as X1.
+ assert (j <= j + k) as L1 by omega.
+ apply (ceval_step_more _ _ _ _ _ L1 IHHce1).
+ assert (ceval_step st' (WHILE b DO c END) (j + k) = Some st'') as X2.
+ assert (k <= j + k) as L2 by omega.
+ apply (ceval_step_more _ _ _ _ _ L2 IHHce2).
+ rewrite X1.
+ rewrite X2.
+ reflexivity.
+Qed.
+
 (** [] *)
 
 Theorem ceval_and_ceval_step_coincide: forall c st st',

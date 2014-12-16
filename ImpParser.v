@@ -361,8 +361,7 @@ Definition parse (str : string) : optionE (com * list token) :=
 (* ####################################################### *)
 (** * Examples *)
 
-
-(*
+(***
 Eval compute in parse "
     IF x == y + 1 + 2 - y * 6 + 3 THEN
       x := x * 1;;
