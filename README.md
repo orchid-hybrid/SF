@@ -21,8 +21,8 @@ Progress:
 | MoreInd: More on Induction | | 
 | SfLib: Software Foundations Library | | 
 | Imp: Simple Imperative Programs | proved the compiler! just bonus questions left.. | 
-| ImpParser: Lexing and Parsing in Coq | | 
-| ImpCEvalFun: Evaluation Function for Imp | | 
+| ImpParser: Lexing and Parsing in Coq | done | 
+| ImpCEvalFun: Evaluation Function for Imp | done | 
 | Extraction: Extracting ML from Coq | | 
 | Equiv: Program Equivalence | | 
 | Hoare: Hoare Logic, Part I | | 
