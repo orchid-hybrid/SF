@@ -129,7 +129,14 @@ Definition cequiv (c1 c2 : com) : Prop :=
       X ::= Y + 1
     END
 
-(* FILL IN HERE *)
+Answer:
+{b}
+skip:{c}
+zero y:{e}
+conditional infinite loop:{a,d}
+infinite loop:{f,g,h,i}
+
+
 [] *)
 
 
@@ -159,15 +166,17 @@ Theorem skip_left: forall c,
   cequiv 
      (SKIP;; c) 
      c.
-Proof. 
-  (* WORKED IN CLASS *)
+Proof.
   intros c st st'.
-  split; intros H.
-  Case "->". 
-    inversion H. subst. 
-    inversion H2. subst. 
+  split.
+  intros H.
+  Case "->".
+  inversion H.
+  subst.
+    inversion H2. subst.
     assumption.
-  Case "<-". 
+    Case "<-".
+    intros H.
     apply E_Seq with st.
     apply E_Skip. 
     assumption.  
@@ -181,8 +190,18 @@ Theorem skip_right: forall c,
   cequiv 
     (c;; SKIP) 
     c.
-Proof. 
-  (* FILL IN HERE *) Admitted.
+Proof.
+  intro c; split; intro H.
+
+  inversion H; subst.
+  inversion H5; subst.
+  assumption.
+
+  apply E_Seq with st'.
+  assumption.
+  constructor.
+Qed.
+ 
 (** [] *)
 
 (** Similarly, here is a simple transformations that simplifies [IFB]
@@ -273,7 +292,23 @@ Theorem IFB_false: forall b c1 c2,
     (IFB b THEN c1 ELSE c2 FI) 
     c2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros; split; intro H'.
+
+  inversion H'; subst; clear H'.
+  Focus 1.
+  elimtype False.
+  unfold bequiv in H.
+  pose (H st) as e.
+  simpl in e.
+  congruence.
+  Focus 1.
+  assumption.
+  Focus 1.
+  apply E_IfFalse.
+  apply H.
+  assumption.
+Qed.    
+  
 (** [] *)
 
 (** **** Exercise: 3 stars (swap_if_branches) *)
@@ -285,7 +320,47 @@ Theorem swap_if_branches: forall b e1 e2,
     (IFB b THEN e1 ELSE e2 FI)
     (IFB BNot b THEN e2 ELSE e1 FI).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros; split; intro H'.
+
+  inversion H'; subst; clear H'.
+  Focus 1.
+  apply E_IfFalse.
+  simpl.
+  rewrite H4.
+  reflexivity.
+  assumption.
+  Focus 1.
+  apply E_IfTrue.
+  simpl.
+  rewrite H4.
+  reflexivity.
+  assumption.
+  
+  inversion H'; subst.
+  Focus 1.
+  simpl in H4.
+  assert (beval st b = false).
+  SearchAbout negb.
+  assert (negb (negb (beval st b)) = negb true) as X by congruence.
+  rewrite negb_involutive in X; simpl in X.
+  rewrite X.
+  reflexivity.
+  Focus 1.
+  apply E_IfFalse.
+  assumption.
+  assumption.
+  Focus 1.
+  assert (beval st b = true).
+  simpl in H4.
+  assert (negb (negb (beval st b)) = negb false) as X by congruence.
+  rewrite negb_involutive in X; simpl in X.
+  rewrite X.
+  reflexivity.
+  apply E_IfTrue.
+  assumption.
+  assumption.
+Qed.
+  
 (** [] *)
 
 (** *** *)
@@ -351,8 +426,7 @@ Proof.
 Lemma WHILE_true_nonterm : forall b c st st',
      bequiv b BTrue ->
      ~( (WHILE b DO c END) / st || st' ).
-Proof. 
-  (* WORKED IN CLASS *)
+Proof.
   intros b c st st' Hb.
   intros H.
   remember (WHILE b DO c END) as cw eqn:Heqcw.
@@ -385,7 +459,17 @@ Theorem WHILE_true: forall b c,
        (WHILE b DO c END)
        (WHILE BTrue DO SKIP END).
 Proof. 
-  (* FILL IN HERE *) Admitted.
+  intros; split; intro H'.
+  elimtype False.
+  apply (WHILE_true_nonterm _ _ _ _ H H').
+
+  elimtype False.
+  assert (bequiv BTrue BTrue) as X.
+  unfold bequiv; intro.
+  reflexivity.
+  apply (WHILE_true_nonterm _ _ _ _ X H').
+Qed.  
+  
 (** [] *)
 
 Theorem loop_unrolling: forall b c,
@@ -416,7 +500,25 @@ Proof.
 Theorem seq_assoc : forall c1 c2 c3,
   cequiv ((c1;;c2);;c3) (c1;;(c2;;c3)).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros; split; intro H.
+
+  inversion H; subst; clear H.
+  inversion H2; subst; clear H2.
+  eapply E_Seq.
+  apply H1.
+  eapply E_Seq.
+  apply H6.
+  apply H5.
+  
+  inversion H; subst; clear H.
+  inversion H5; subst; clear H5.
+  eapply E_Seq.
+  eapply E_Seq.
+  apply H2.
+  apply H1.
+  apply H6.
+Qed.
+
 (** [] *)
 
 (** ** The Functional Equivalence Axiom *)
@@ -431,9 +533,9 @@ Theorem identity_assignment_first_try : forall (X:id),
 Proof. 
    intros. split; intro H.
      Case "->". 
-       inversion H; subst.  simpl.
-       replace (update st X (st X)) with st.  
-       constructor. 
+     inversion H; subst.  simpl.
+     replace (update st X (st X)) with st.
+     constructor.
        (* Stuck... *) Abort.
 
 (** Here we're stuck. The goal looks reasonable, but in fact it is not
@@ -513,7 +615,31 @@ Theorem assign_aequiv : forall X e,
   aequiv (AId X) e -> 
   cequiv SKIP (X ::= e).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros; split; intro H'.
+  Print E_Ass.
+  replace st' with (update st X (aeval st e)).
+  apply E_Ass.
+  reflexivity.
+  inversion H'; subst; clear H'.
+  unfold update.
+  apply functional_extensionality; intro.
+  destruct (eq_id_dec X x); subst.
+  pose (H st') as e'; simpl in e'.
+  congruence.
+  reflexivity.
+
+  inversion H'; subst.
+  replace (update st X (aeval st e)) with st.
+  constructor.
+  apply functional_extensionality; intro.
+  unfold update.
+  unfold aequiv in H.
+  destruct (eq_id_dec X x); subst.
+  rewrite <-  H.
+  reflexivity.
+  reflexivity.
+Qed.
+
 (** [] *)
 
 (* ####################################################### *)
