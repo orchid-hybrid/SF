@@ -23,8 +23,8 @@ Progress:
 | Imp: Simple Imperative Programs | proved the compiler! just bonus questions left.. | 
 | ImpParser: Lexing and Parsing in Coq | done | 
 | ImpCEvalFun: Evaluation Function for Imp | done | 
-| Extraction: Extracting ML from Coq | | 
-| Equiv: Program Equivalence | | 
+| Extraction: Extracting ML from Coq | done | 
+| Equiv: Program Equivalence | started... | 
 | Hoare: Hoare Logic, Part I | | 
 | Hoare2: Hoare Logic, Part II | | 
 | HoareAsLogic: Hoare Logic as a Logic | | 
