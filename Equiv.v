@@ -308,7 +308,7 @@ Proof.
   apply H.
   assumption.
 Qed.    
-  
+
 (** [] *)
 
 (** **** Exercise: 3 stars (swap_if_branches) *)
@@ -445,7 +445,9 @@ Proof.
 (** **** Exercise: 2 stars, optional (WHILE_true_nonterm_informal) *)
 (** Explain what the lemma [WHILE_true_nonterm] means in English.
 
-(* FILL IN HERE *)
+given that b is equivalent to true
+there is no proof that the program "(WHILE b DO c END)" terminates with state st' (for any state st')
+
 *)
 (** [] *)
 
@@ -831,8 +833,29 @@ Proof.
 Theorem CSeq_congruence : forall c1 c1' c2 c2',
   cequiv c1 c1' -> cequiv c2 c2' ->
   cequiv (c1;;c2) (c1';;c2').
-Proof. 
-  (* FILL IN HERE *) Admitted.
+Proof.
+  intros c1 c1' c2 c2'.
+  unfold cequiv.
+  intros H1 H2.
+  intros st st'.
+
+  split; intro H.
+
+  inversion H; subst; clear H.
+  destruct (H1 st st'0) as [H1X H1Y].
+  pose (H1X H4).
+  destruct (H2 st'0 st') as [H2X H2Y].
+  pose (H2X H7).
+  apply E_Seq with (st' := st'0); assumption.
+
+  inversion H; subst; clear H.
+  destruct (H1 st st'0) as [H1X H1Y].
+  pose (H1Y H4).
+  destruct (H2 st'0 st') as [H2X H2Y].
+  pose (H2Y H7).
+  apply E_Seq with (st' := st'0); assumption.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars (CIf_congruence) *)
@@ -840,7 +863,32 @@ Theorem CIf_congruence : forall b b' c1 c1' c2 c2',
   bequiv b b' -> cequiv c1 c1' -> cequiv c2 c2' ->
   cequiv (IFB b THEN c1 ELSE c2 FI) (IFB b' THEN c1' ELSE c2' FI).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  unfold cequiv in *.
+  intros st st'.
+  
+  split; intro X.
+  inversion X; subst; clear X.
+  apply E_IfTrue.
+  unfold bequiv in *; congruence.
+  destruct (H0 st st').
+  tauto.
+  apply E_IfFalse.
+  unfold bequiv in *; congruence.
+  destruct (H1 st st').
+  tauto.
+
+  inversion X; subst; clear X.
+  apply E_IfTrue.
+  unfold bequiv in *; congruence.
+  destruct (H0 st st').
+  tauto.
+  apply E_IfFalse.
+  unfold bequiv in *; congruence.
+  destruct (H1 st st').
+  tauto.
+Qed.
+
 (** [] *)
 
 (** *** *)
