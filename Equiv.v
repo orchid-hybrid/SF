@@ -1117,18 +1117,20 @@ Theorem fold_constants_aexp_sound :
   atrans_sound fold_constants_aexp.
 Proof.
   unfold atrans_sound. intros a. unfold aequiv. intros st.
-  aexp_cases (induction a) Case; simpl;
+  aexp_cases (induction a) Case; simpl.
     (* ANum and AId follow immediately *)
-    try reflexivity;
-    (* APlus, AMinus, and AMult follow from the IH
-       and the observation that
-              aeval st (APlus a1 a2) 
-            = ANum ((aeval st a1) + (aeval st a2)) 
-            = aeval st (ANum ((aeval st a1) + (aeval st a2)))
-       (and similarly for AMinus/minus and AMult/mult) *)
-    try (destruct (fold_constants_aexp a1);
-         destruct (fold_constants_aexp a2);
-         rewrite IHa1; rewrite IHa2; reflexivity). Qed.
+  reflexivity.
+  reflexivity.
+  destruct (fold_constants_aexp a1);
+    destruct (fold_constants_aexp a2) ; rewrite IHa1; rewrite IHa2;
+    reflexivity.
+  destruct (fold_constants_aexp a1);
+    destruct (fold_constants_aexp a2) ; rewrite IHa1; rewrite IHa2;
+    reflexivity.
+  destruct (fold_constants_aexp a1);
+    destruct (fold_constants_aexp a2) ; rewrite IHa1; rewrite IHa2;
+    reflexivity.
+Qed.
                                                       
 (** **** Exercise: 3 stars, optional (fold_bexp_Eq_informal) *)
 (** Here is an informal proof of the [BEq] case of the soundness
@@ -1210,7 +1212,7 @@ Proof.
   bexp_cases (induction b) Case; 
     (* BTrue and BFalse are immediate *)
     try reflexivity. 
-  Case "BEq". 
+  Case "BEq".
     (* Doing induction when there are a lot of constructors makes
        specifying variable names a chore, but Coq doesn't always
        choose nice variable names.  We can rename entries in the
@@ -1227,8 +1229,14 @@ Proof.
       (* The only interesting case is when both a1 and a2 
          become constants after folding *)
       simpl. destruct (beq_nat n n0); reflexivity.
-  Case "BLe". 
-    (* FILL IN HERE *) admit.
+      Case "BLe".
+      simpl.
+      rewrite (fold_constants_aexp_sound a st).
+      rewrite (fold_constants_aexp_sound a0 st).
+    destruct (fold_constants_aexp a);
+        destruct (fold_constants_aexp a0);
+        simpl; try reflexivity.
+    destruct (ble_nat n n0); reflexivity.
   Case "BNot". 
     simpl. remember (fold_constants_bexp b) as b' eqn:Heqb'. 
     rewrite IHb.
@@ -1265,9 +1273,25 @@ Proof.
     SCase "b always false".
       apply trans_cequiv with c2; try assumption.
       apply IFB_false; assumption.
-  Case "WHILE".
-    (* FILL IN HERE *) Admitted.
-(** [] *)
+      Case "WHILE".
+      assert (bequiv b (fold_constants_bexp b)).
+      apply fold_constants_bexp_sound.
+      eapply trans_cequiv.
+      apply (CWhile_congruence _ _ _ _ (fun s => eq_refl (beval s b)) IHc).
+      destruct (fold_constants_bexp b);
+        try (apply CWhile_congruence; 
+             try assumption;
+             try (unfold cequiv; reflexivity);
+             elimtype False; tauto).
+      Focus 1.
+      split; intro X.
+      pose (WHILE_true_nonterm b (fold_constants_com c) st st' H).
+      elimtype False; auto.
+      pose (WHILE_true_nonterm BTrue SKIP st st' (fun _ => eq_refl _) X).
+      elimtype False; auto.
+      Focus 1.
+      apply (WHILE_false b (fold_constants_com c) H).
+Qed.
 
 (* ########################################################## *)
 (** *** Soundness of (0 + n) Elimination, Redux *)
